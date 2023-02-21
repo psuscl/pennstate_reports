@@ -1,0 +1,5 @@
+en:
+  reports:
+    digital_objects_report:
+      title: Digital Objects Report
+      description: Reports on digital objects in ArchivesSpace, including type (preservation or access), level of digital preservation, file location, and linked collection(s).
