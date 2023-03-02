@@ -1,5 +1,11 @@
 en:
   reports:
     digital_objects_report:
-      title: Digital Objects Report
+      title: SCL - Digital Objects Report
       description: Reports on digital objects in ArchivesSpace, including type (preservation or access), level of digital preservation, file location, and linked collection(s).
+    top_containers_report:
+      title: SCL - Top Containers Report
+      description: Reports on top containers and their locations in ArchivesSpace. Containers will only be reported if their collection is published.
+    users_report:
+      title: SCL - Users Report
+      description: Reports on users and the permission groups (per repository) to which they belong.
