@@ -5,13 +5,11 @@ class TopContainersReport < AbstractReport
   def query_string
     "select
       top_container.id as id,
-      top_container.ils_holding_id as location_label,
+      top_container.ils_holding_id as container_location,
       top_container.type_id as type,
       top_container.indicator as indicator,
-      top_container.ils_holding_id as location_label,
-      count(distinct collection.id) as resources,
-      group_concat(distinct collection.resource_id SEPARATOR ';') as resource,
-      count(archival_object.id) as items
+      group_concat(distinct collection.resource_id SEPARATOR ';') as container_resources,
+      count(archival_object.id) as container_items
     
     from top_container
 
@@ -31,15 +29,14 @@ class TopContainersReport < AbstractReport
         on collection.id = archival_object.root_record_id
     
     where top_container.repo_id = #{db.literal(@repo_id)} and collection.publish
-    group by top_container.id
-    order by resources desc"
+    group by top_container.id"
   end
 
   def fix_row(row)
     ReportUtils.get_enum_values(row, [:type])
     ReportUtils.fix_container_indicator(row)
     row[:location] = LinkedLocationSubreport.new(self, row[:id]).get_content
-    row[:uri] = "/repositories/#{db.literal(@repo_id)}/top_containers/#{row[:id]}"
+    row[:container_uri] = "/repositories/#{db.literal(@repo_id)}/top_containers/#{row[:id]}"
     row.delete(:id)
   end
 
@@ -57,7 +54,7 @@ class LinkedLocationSubreport < AbstractSubreport
   def query_string
     "select
       location.id as id,
-      location.classification as location_class,
+      location.classification as classification,
       location.coordinate_1_label,
       location.coordinate_1_indicator,
       location.coordinate_2_label,
@@ -74,7 +71,9 @@ class LinkedLocationSubreport < AbstractSubreport
 
   def fix_row(row)
     ReportUtils.get_location_coordinate(row)
-    row[:location_uri] = "/locations/#{row[:id]}"
+    row[:indicator] = row[:location_in_room]
+    row.delete(:location_in_room)
+    row[:uri] = "/locations/#{row[:id]}"
     row.delete(:id)
   end
 end
