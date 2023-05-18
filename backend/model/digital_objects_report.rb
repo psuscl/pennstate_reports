@@ -8,11 +8,14 @@ class DigitalObjectsReport < AbstractReport
       digital_object.title as title,
       digital_object.publish as published,
       digital_object.digital_object_id as identifier,
+      instance.is_representative as instance_representative,
       archival_object.id as archival_object_id,
       resource.title as resource_title,
       resource.identifier as resource_identifier,
       file_version.file_uri,
       file_version.publish as file_version_published,
+      file_version.is_representative as file_version_representative,
+      file_version.xlink_show_attribute_id as file_version_show_attribute,
       user_defined.enum_1_id as object_type
     from digital_object
 
@@ -46,8 +49,8 @@ class DigitalObjectsReport < AbstractReport
   end
     
   def fix_row(row)
-    ReportUtils.fix_boolean_fields(row, [:published, :file_version_published])
-    ReportUtils.get_enum_values(row, [:object_type])
+    ReportUtils.fix_boolean_fields(row, [:published, :instance_representative, :file_version_published, :file_version_representative])
+    ReportUtils.get_enum_values(row, [:object_type, :file_version_show_attribute])
     ReportUtils.fix_identifier_format(row, :resource_identifier) if row[:resource_identifier]
     row[:top_container] = LinkedTopContainerSubreport.new(self, row[:archival_object_id]).get_content
     construct_uris(row)
