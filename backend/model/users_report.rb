@@ -16,8 +16,17 @@ class UsersReport < AbstractReport
       source,
       is_system_user,
       is_hidden_user,
-      is_active_user
-    from user"
+      is_active_user,
+      group_list
+    from user
+    natural left outer join
+    (select
+      group_user.user_id as id,
+      group_concat(`group`.description separator '; ') as group_list
+      from group_user, `group`
+      where `group`.id = group_user.group_id
+      group by group_user.user_id
+    ) as `groups`"
     
   end
 
@@ -38,7 +47,7 @@ class UsersReport < AbstractReport
       ReportUtils.fix_boolean_fields(row, [:is_system_user, :is_hidden_user, :is_active_user])
     end
 
-    row[:groups] = UserGroupsSubreport.new( self, user_id ).get_content
+    #row[:groups] = UserGroupsSubreport.new( self, user_id ).get_content
 
     puts row
   end
@@ -74,8 +83,10 @@ class UserGroupsSubreport < AbstractSubreport
   end
 
   def query_string
-    "select description from `group`
-    where id in (select group_id from group_user where user_id = #{db.literal(@user_id)} )"
+    "select group_concat(`group`.description separator '; ') as description
+    from group_user left outer join `group` on `group`.id = group_user.group_id
+    where group_user.user_id = #{db.literal(@user_id)}
+    group by group_user.user_id"
   end
 
   def self.field_name
