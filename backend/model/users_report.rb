@@ -47,8 +47,6 @@ class UsersReport < AbstractReport
       ReportUtils.fix_boolean_fields(row, [:is_system_user, :is_hidden_user, :is_active_user])
     end
 
-    #row[:groups] = UserGroupsSubreport.new( self, user_id ).get_content
-
     puts row
   end
 
@@ -71,25 +69,4 @@ class UsersReport < AbstractReport
     info.delete(:repository)
   end
 
-end
-
-class UserGroupsSubreport < AbstractSubreport
-
-  register_subreport('groups', [ 'user' ])
-
-  def initialize( parent_report, user_id )
-    super(parent_report)
-    @user_id = user_id
-  end
-
-  def query_string
-    "select group_concat(`group`.description separator '; ') as description
-    from group_user left outer join `group` on `group`.id = group_user.group_id
-    where group_user.user_id = #{db.literal(@user_id)}
-    group by group_user.user_id"
-  end
-
-  def self.field_name
-    'groups'
-  end
 end
