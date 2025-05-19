@@ -16,8 +16,17 @@ class UsersReport < AbstractReport
       source,
       is_system_user,
       is_hidden_user,
-      is_active_user
-    from user"
+      is_active_user,
+      group_list
+    from user
+    natural left outer join
+    (select
+      group_user.user_id as id,
+      group_concat(`group`.description separator '; ') as group_list
+      from group_user, `group`
+      where `group`.id = group_user.group_id
+      group by group_user.user_id
+    ) as `groups`"
     
   end
 
@@ -37,8 +46,6 @@ class UsersReport < AbstractReport
       row.delete(:user_title)  # as user_title, because title displays as "User Group Report" in HTML report
       ReportUtils.fix_boolean_fields(row, [:is_system_user, :is_hidden_user, :is_active_user])
     end
-
-    row[:groups] = UserGroupsSubreport.new( self, user_id ).get_content
 
     puts row
   end
@@ -62,23 +69,4 @@ class UsersReport < AbstractReport
     info.delete(:repository)
   end
 
-end
-
-class UserGroupsSubreport < AbstractSubreport
-
-  register_subreport('groups', [ 'user' ])
-
-  def initialize( parent_report, user_id )
-    super(parent_report)
-    @user_id = user_id
-  end
-
-  def query_string
-    "select description from `group`
-    where id in (select group_id from group_user where user_id = #{db.literal(@user_id)} )"
-  end
-
-  def self.field_name
-    'groups'
-  end
 end
