@@ -8,6 +8,8 @@ class DigitalObjectsReport < AbstractReport
       digital_object.title as title,
       digital_object.publish as published,
       digital_object.digital_object_id as identifier,
+      digital_object.created_by as created_by,
+      digital_object.create_time as create_time,
       instance.is_representative as instance_representative,
       archival_object.id as archival_object_id,
       resource.title as resource_title,
