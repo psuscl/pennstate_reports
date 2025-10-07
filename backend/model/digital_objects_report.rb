@@ -54,6 +54,7 @@ class DigitalObjectsReport < AbstractReport
     ReportUtils.fix_boolean_fields(row, [:published, :instance_representative, :file_version_published, :file_version_representative])
     ReportUtils.get_enum_values(row, [:object_type, :file_version_show_attribute])
     ReportUtils.fix_identifier_format(row, :resource_identifier) if row[:resource_identifier]
+    row[:collection_management] = LinkedCollectionManagementSubreport.new(self, row[:id]).get_content
     row[:top_container] = LinkedTopContainerSubreport.new(self, row[:archival_object_id]).get_content
     construct_uris(row)
     row.delete(:id)
@@ -66,6 +67,32 @@ class DigitalObjectsReport < AbstractReport
 
   def identifier_field
     :record_title
+  end
+end
+
+class LinkedCollectionManagementSubreport < AbstractSubreport
+  
+  register_subreport('collection_management', ['digital_object'])
+
+  def initialize(parent_report, digital_object_id)
+    super(parent_report)
+    @digital_object_id = digital_object_id
+  end
+
+  def query_string
+    "select
+      collection_management.digital_object_id,
+      collection_management.processing_priority_id as processing_priority,
+      collection_management.processing_status_id as processing_status,
+      collection_management.processors
+    from digital_object
+      left outer join collection_management
+        on collection_management.digital_object_id = digital_object.id
+    where digital_object.id = #{db.literal(@digital_object_id)}"
+  end
+
+  def fix_row(row)
+    ReportUtils.get_enum_values(row, [:processing_priority, :processing_status])
   end
 end
 
