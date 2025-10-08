@@ -56,6 +56,9 @@ class DigitalObjectsReport < AbstractReport
     ReportUtils.fix_identifier_format(row, :resource_identifier) if row[:resource_identifier]
     row[:collection_management] = LinkedCollectionManagementSubreport.new(self, row[:id]).get_content
     row[:top_container] = LinkedTopContainerSubreport.new(self, row[:archival_object_id]).get_content
+    [:sip_submitted, :sip_ingested].each do |field|
+      row[field] = LinkedEventSubreport.new(self, row[:archival_object_id], field).get_content
+    end
     construct_uris(row)
     row.delete(:id)
     row.delete(:archival_object_id)
@@ -67,6 +70,28 @@ class DigitalObjectsReport < AbstractReport
 
   def identifier_field
     :record_title
+  end
+end
+
+class LinkedEventSubreport < AbstractSubreport
+
+  register_subreport('event', ['archival_object'])
+
+  def initialize(parent_report, archival_object_id, field)
+    super(parent_report)
+    @archival_object_id = archival_object_id
+    @field = field.to_s
+  end
+
+  def query_string
+    "select group_concat(date.begin) as date
+    from event
+      left outer join event_link_rlshp on event_link_rlshp.event_id = event.id
+      left outer join archival_object on archival_object.id = event_link_rlshp.archival_object_id
+      left outer join date on date.event_id = event.id
+      left outer join (select id, value from enumeration_value) as event_type on event_type.id = event.event_type_id
+    where archival_object.id = #{db.literal(@archival_object_id)} and event_type.value = #{db.literal(@field)}
+    group by event_type.id"
   end
 end
 
