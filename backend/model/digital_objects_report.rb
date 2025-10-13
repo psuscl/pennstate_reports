@@ -106,7 +106,6 @@ class LinkedCollectionManagementSubreport < AbstractSubreport
 
   def query_string
     "select
-      collection_management.digital_object_id,
       collection_management.processing_priority_id as processing_priority,
       collection_management.processing_status_id as processing_status,
       collection_management.processors
